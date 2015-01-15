@@ -144,10 +144,43 @@ describe('lacona-addon-unique', function () {
     }
 
     toStream(['tes','test'])
-      .pipe(parser)
-      .pipe(stateful)
-      .pipe(ordered)
-      .pipe(unique)
-      .pipe(toArray(callback));
+    .pipe(parser)
+    .pipe(stateful)
+    .pipe(ordered)
+    .pipe(unique)
+    .pipe(toArray(callback));
+  });
+
+  it('handles deletes appropriately' , function (done) {
+    function callback(data) {
+      expect(data).to.have.length(4);
+
+      expect(data[0].event).to.equal('insert');
+      expect(data[0].id).to.equal(0);
+      expect(data[0].data.match[0].string).to.equal('test');
+      expect(data[0].data.suggestion.words[0].string).to.equal('aaa');
+
+      expect(data[1].event).to.equal('insert');
+      expect(data[1].id).to.equal(1);
+      expect(data[1].data.match[0].string).to.equal('test');
+      expect(data[1].data.suggestion.words[0].string).to.equal('bbb');
+
+      expect(data[2].event).to.equal('update');
+      expect(data[2].id).to.equal(1);
+      expect(data[2].data.match[0].string).to.equal('test');
+      expect(data[2].data.suggestion.words[0].string).to.equal('bbb');
+
+      expect(data[3].event).to.equal('delete');
+      expect(data[3].id).to.equal(0);
+
+      done();
+    }
+
+    toStream(['test','testb'])
+    .pipe(parser)
+    .pipe(stateful)
+    .pipe(ordered)
+    .pipe(unique)
+    .pipe(toArray(callback));
   });
 });
