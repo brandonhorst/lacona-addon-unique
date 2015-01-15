@@ -1,0 +1,46 @@
+{
+  "name": "lacona-addon-unique",
+  "version": "0.0.0",
+  "description": "Lacona pipe that uniquifies a parse stream",
+  "main": "lib/unique.js",
+  "scripts": {
+    "test": "mocha test",
+    "lint": "npm run lint:lib && npm run lint:test",
+    "lint:lib": "jshint --config node_modules/lacona-util-jshint/lib.json lib",
+    "lint:test": "jshint --config node_modules/lacona-util-jshint/test.json test",
+    "validate": "npm run lint && npm run test",
+    "cover": "istanbul cover _mocha test -- -R dot && istanbul report text",
+    "coveralls": "istanbul cover _mocha test --report lcovonly -- -R dot && cat coverage/lcov.info | coveralls && rimraf ./coverage"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/brandonhorst/lacona-addon-unique.git"
+  },
+  "keywords": [
+    "lacona",
+    "unique",
+    "suggestion"
+  ],
+  "author": "@brandonhorst",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/brandonhorst/lacona-addon-ordered/issues"
+  },
+  "homepage": "https://github.com/brandonhorst/lacona-addon-ordered",
+  "devDependencies": {
+    "chai": "^1.10.0",
+    "coveralls": "^2.11.2",
+    "istanbul": "^0.3.5",
+    "jshint": "^2.5.11",
+    "lacona": "^0.14.2",
+    "lacona-addon-ordered": "^0.2.1",
+    "lacona-addon-stateful": "^0.6.1",
+    "lacona-util-fulltext": "0.0.1",
+    "lacona-util-jshint": "^0.2.0",
+    "mocha": "^2.1.0"
+  },
+  "dependencies": {
+    "inherits": "^2.0.1",
+    "lodash": "^2.4.1"
+  }
+}
