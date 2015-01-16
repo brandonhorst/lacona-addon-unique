@@ -1,6 +1,6 @@
 {
   "name": "lacona-addon-unique",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Lacona pipe that uniquifies a parse stream",
   "main": "lib/unique.js",
   "scripts": {
