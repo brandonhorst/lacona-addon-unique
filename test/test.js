@@ -45,142 +45,250 @@ function suggestionFulltext(option) {
 describe('lacona-addon-unique', function () {
   var parser, stateful, ordered, unique;
 
-  beforeEach(function () {
-    var test = lacona.createPhrase({
-      name: 'test/test',
-      describe: function () {
-        return lacona.sequence({children: [
-          lacona.literal({text: 'test'}),
-          lacona.choice({children: [
-            lacona.literal({text: 'aaa'}),
-            lacona.literal({text: 'bbb'})
-          ]})
-        ]});
-      }
-    });
 
+  beforeEach(function () {
     parser = new lacona.Parser();
-    parser.sentences = [test()];
     stateful = new Stateful({serializer: fulltext});
     ordered = new Ordered({comparator: fulltext});
     unique = new Unique({serializer: suggestionFulltext});
   });
 
-  it('uniquifies updates within a single suggestion' , function (done) {
-    function callback(data) {
-      expect(data).to.have.length(2);
-      expect(data[0].event).to.equal('insert');
-      expect(data[0].data.suggestion.words[0].string).to.equal('test');
-      expect(data[0].data.completion[0].string).to.equal('aaa');
+  describe('basic usage', function () {
+    var test;
 
-      expect(data[1].event).to.equal('update');
-      expect(data[1].data.suggestion.words[0].string).to.equal('test');
-      expect(data[1].data.completion[0].string).to.equal('aaa');
+    beforeEach(function () {
+      test = lacona.createPhrase({
+        name: 'test/test',
+        describe: function () {
+          return lacona.sequence({children: [
+            lacona.literal({text: 'test'}),
+            lacona.choice({children: [
+              lacona.literal({text: 'aaa'}),
+              lacona.literal({text: 'bbb'})
+            ]})
+          ]});
+        }
+      });
 
-      done();
-    }
+      parser.sentences = [test()];
+    });
 
-    toStream(['t', 'te'])
-      .pipe(parser)
-      .pipe(stateful)
-      .pipe(ordered)
-      .pipe(unique)
-      .pipe(toArray(callback));
+    it('uniquifies updates within a single suggestion' , function (done) {
+      function callback(data) {
+        expect(data).to.have.length(2);
+        expect(data[0].event).to.equal('insert');
+        expect(data[0].data.suggestion.words[0].string).to.equal('test');
+        expect(data[0].data.completion[0].string).to.equal('aaa');
+
+        expect(data[1].event).to.equal('update');
+        expect(data[1].data.suggestion.words[0].string).to.equal('test');
+        expect(data[1].data.completion[0].string).to.equal('aaa');
+
+        done();
+      }
+
+      toStream(['t', 'te'])
+        .pipe(parser)
+        .pipe(stateful)
+        .pipe(ordered)
+        .pipe(unique)
+        .pipe(toArray(callback));
+    });
+
+    it('uniquifies updates when changing the suggestion' , function (done) {
+      function callback(data) {
+        expect(data).to.have.length(3);
+
+        expect(data[0].id).to.equal(0);
+        expect(data[0].event).to.equal('insert');
+        expect(data[0].data.match[0].string).to.equal('test');
+        expect(data[0].data.suggestion.words[0].string).to.equal('bbb');
+
+        expect(data[1].event).to.equal('insert');
+        expect(data[1].id).to.equal(0);
+        expect(data[1].data.suggestion.words[0].string).to.equal('test');
+        expect(data[1].data.completion[0].string).to.equal('aaa');
+
+        expect(data[2].event).to.equal('delete');
+        expect(data[2].id).to.equal(1);
+
+        done();
+      }
+
+      toStream(['testb', 'tes'])
+        .pipe(parser)
+        .pipe(stateful)
+        .pipe(ordered)
+        .pipe(unique)
+        .pipe(toArray(callback));
+    });
+
+    it('removes uniqueness check when suggestion changes' , function (done) {
+      function callback(data) {
+        expect(data).to.have.length(4);
+
+        expect(data[0].id).to.equal(0);
+        expect(data[0].event).to.equal('insert');
+        expect(data[0].data.suggestion.words[0].string).to.equal('test');
+        expect(data[0].data.completion[0].string).to.equal('aaa');
+
+        expect(data[1].event).to.equal('update');
+        expect(data[1].id).to.equal(0);
+        expect(data[1].data.match[0].string).to.equal('test');
+        expect(data[1].data.suggestion.words[0].string).to.equal('aaa');
+
+        expect(data[2].event).to.equal('insert');
+        expect(data[2].id).to.equal(1);
+        expect(data[2].data.suggestion.words[0].string).to.equal('test');
+        expect(data[2].data.completion[0].string).to.equal('bbb');
+
+        expect(data[3].event).to.equal('update');
+        expect(data[3].id).to.equal(1);
+        expect(data[3].data.match[0].string).to.equal('test');
+        expect(data[3].data.suggestion.words[0].string).to.equal('bbb');
+
+        done();
+      }
+
+      toStream(['tes','test'])
+        .pipe(parser)
+        .pipe(stateful)
+        .pipe(ordered)
+        .pipe(unique)
+        .pipe(toArray(callback));
+    });
+
+    it('handles delete switches appropriately' , function (done) {
+      function callback(data) {
+        expect(data).to.have.length(4);
+
+        expect(data[0].event).to.equal('insert');
+        expect(data[0].id).to.equal(0);
+        expect(data[0].data.match[0].string).to.equal('test');
+        expect(data[0].data.suggestion.words[0].string).to.equal('aaa');
+
+        expect(data[1].event).to.equal('insert');
+        expect(data[1].id).to.equal(1);
+        expect(data[1].data.match[0].string).to.equal('test');
+        expect(data[1].data.suggestion.words[0].string).to.equal('bbb');
+
+        expect(data[2].event).to.equal('update');
+        expect(data[2].id).to.equal(1);
+        expect(data[2].data.match[0].string).to.equal('test');
+        expect(data[2].data.suggestion.words[0].string).to.equal('bbb');
+
+        expect(data[3].event).to.equal('delete');
+        expect(data[3].id).to.equal(0);
+
+        done();
+      }
+
+      toStream(['test','testb'])
+        .pipe(parser)
+        .pipe(stateful)
+        .pipe(ordered)
+        .pipe(unique)
+        .pipe(toArray(callback));
+    });
+
+    it('handles delete ignores appropriately' , function (done) {
+      function callback(data) {
+        expect(data).to.have.length(4);
+
+        expect(data[1].event).to.equal('update');
+        expect(data[1].id).to.equal(0);
+        expect(data[1].data.match[0].string).to.equal('test');
+        expect(data[1].data.suggestion.words[0].string).to.equal('aaa');
+
+        expect(data[2].event).to.equal('insert');
+        expect(data[2].id).to.equal(1);
+        expect(data[2].data.suggestion.words[0].string).to.equal('test');
+        expect(data[2].data.completion[0].string).to.equal('bbb');
+
+        expect(data[3].event).to.equal('delete');
+        expect(data[3].id).to.equal(1);
+
+        done();
+      }
+
+      toStream(['tes','testa'])
+        .pipe(parser)
+        .pipe(stateful)
+        .pipe(ordered)
+        .pipe(unique)
+        .pipe(toArray(callback));
+    });
   });
 
-  it('uniquifies updates when changing the suggestion' , function (done) {
-    function callback(data) {
-      expect(data).to.have.length(3);
+  describe('reverse order', function () {
+    var test;
+    beforeEach(function () {
+      test = lacona.createPhrase({
+        name: 'test/test',
+        describe: function () {
+          return lacona.sequence({children: [
+            lacona.literal({text: 'test'}),
+            lacona.choice({children: [
+              lacona.literal({text: 'bbb'}),
+              lacona.literal({text: 'aaa'})
+            ]})
+          ]});
+        }
+      });
 
-      expect(data[0].id).to.equal(0);
-      expect(data[0].event).to.equal('insert');
-      expect(data[0].data.match[0].string).to.equal('test');
-      expect(data[0].data.suggestion.words[0].string).to.equal('bbb');
+      parser.sentences = [test()];
+    });
 
-      expect(data[1].event).to.equal('insert');
-      expect(data[1].id).to.equal(0);
-      expect(data[1].data.suggestion.words[0].string).to.equal('test');
-      expect(data[1].data.completion[0].string).to.equal('aaa');
+    it('allows for inserts into an existing unique group', function (done) {
+      function callback(data) {
+        expect(data).to.have.length(3);
 
-      expect(data[2].event).to.equal('delete');
-      expect(data[2].id).to.equal(1);
+        expect(data[0].event).to.equal('insert');
+        expect(data[0].id).to.equal(0);
+        expect(data[0].data.suggestion.words[0].string).to.equal('test');
+        expect(data[0].data.completion[0].string).to.equal('bbb');
 
-      done();
-    }
+        expect(data[1].event).to.equal('delete');
+        expect(data[1].id).to.equal(0);
 
-    toStream(['testb', 'tes'])
-      .pipe(parser)
-      .pipe(stateful)
-      .pipe(ordered)
-      .pipe(unique)
-      .pipe(toArray(callback));
-  });
+        expect(data[2].event).to.equal('insert');
+        expect(data[2].id).to.equal(0);
+        expect(data[2].data.suggestion.words[0].string).to.equal('test');
+        expect(data[2].data.completion[0].string).to.equal('aaa');
 
-  it('removes uniqueness check when suggestion changes' , function (done) {
-    function callback(data) {
-      expect(data).to.have.length(4);
+        done();
+      }
 
-      expect(data[0].id).to.equal(0);
-      expect(data[0].event).to.equal('insert');
-      expect(data[0].data.suggestion.words[0].string).to.equal('test');
-      expect(data[0].data.completion[0].string).to.equal('aaa');
+      toStream(['t'])
+        .pipe(parser)
+        .pipe(stateful)
+        .pipe(ordered)
+        .pipe(unique)
+        .pipe(toArray(callback));
+    });
 
-      expect(data[1].event).to.equal('update');
-      expect(data[1].id).to.equal(0);
-      expect(data[1].data.match[0].string).to.equal('test');
-      expect(data[1].data.suggestion.words[0].string).to.equal('aaa');
+    it('removes items from an existing unique group', function (done) {
+      function callback(data) {
+        expect(data).to.have.length(5);
 
-      expect(data[2].event).to.equal('insert');
-      expect(data[2].id).to.equal(1);
-      expect(data[2].data.suggestion.words[0].string).to.equal('test');
-      expect(data[2].data.completion[0].string).to.equal('bbb');
+        expect(data[3].event).to.equal('insert');
+        expect(data[3].id).to.equal(1);
+        expect(data[3].data.match[0].string).to.equal('test');
+        expect(data[3].data.suggestion.words[0].string).to.equal('bbb');
 
-      expect(data[3].event).to.equal('update');
-      expect(data[3].id).to.equal(1);
-      expect(data[3].data.match[0].string).to.equal('test');
-      expect(data[3].data.suggestion.words[0].string).to.equal('bbb');
+        expect(data[4].event).to.equal('delete');
+        expect(data[4].id).to.equal(0);
 
-      done();
-    }
+        done();
+      }
 
-    toStream(['tes','test'])
-    .pipe(parser)
-    .pipe(stateful)
-    .pipe(ordered)
-    .pipe(unique)
-    .pipe(toArray(callback));
-  });
+      toStream(['t', 'testb'])
+        .pipe(parser)
+        .pipe(stateful)
+        .pipe(ordered)
+        .pipe(unique)
+        .pipe(toArray(callback));
 
-  it('handles deletes appropriately' , function (done) {
-    function callback(data) {
-      expect(data).to.have.length(4);
-
-      expect(data[0].event).to.equal('insert');
-      expect(data[0].id).to.equal(0);
-      expect(data[0].data.match[0].string).to.equal('test');
-      expect(data[0].data.suggestion.words[0].string).to.equal('aaa');
-
-      expect(data[1].event).to.equal('insert');
-      expect(data[1].id).to.equal(1);
-      expect(data[1].data.match[0].string).to.equal('test');
-      expect(data[1].data.suggestion.words[0].string).to.equal('bbb');
-
-      expect(data[2].event).to.equal('update');
-      expect(data[2].id).to.equal(1);
-      expect(data[2].data.match[0].string).to.equal('test');
-      expect(data[2].data.suggestion.words[0].string).to.equal('bbb');
-
-      expect(data[3].event).to.equal('delete');
-      expect(data[3].id).to.equal(0);
-
-      done();
-    }
-
-    toStream(['test','testb'])
-    .pipe(parser)
-    .pipe(stateful)
-    .pipe(ordered)
-    .pipe(unique)
-    .pipe(toArray(callback));
+    });
   });
 });
