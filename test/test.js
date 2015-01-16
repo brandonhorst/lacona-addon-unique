@@ -35,12 +35,6 @@ function toArray(done) {
   return newStream;
 }
 
-function suggestionFulltext(option) {
-  return option.suggestion.words.map(function (word) {
-    return word.string;
-  }).join();
-}
-
 
 describe('lacona-addon-unique', function () {
   var parser, stateful, ordered, unique;
@@ -48,9 +42,9 @@ describe('lacona-addon-unique', function () {
 
   beforeEach(function () {
     parser = new lacona.Parser();
-    stateful = new Stateful({serializer: fulltext});
-    ordered = new Ordered({comparator: fulltext});
-    unique = new Unique({serializer: suggestionFulltext});
+    stateful = new Stateful({serializer: fulltext.all});
+    ordered = new Ordered({comparator: fulltext.all});
+    unique = new Unique({serializer: fulltext.suggestion});
   });
 
   describe('basic usage', function () {
@@ -283,6 +277,35 @@ describe('lacona-addon-unique', function () {
       }
 
       toStream(['t', 'testb'])
+        .pipe(parser)
+        .pipe(stateful)
+        .pipe(ordered)
+        .pipe(unique)
+        .pipe(toArray(callback));
+
+    });
+
+    it('removes items from an vanishing unique group', function (done) {
+      function callback(data) {
+        expect(data).to.have.length(5);
+
+        expect(data[2].event).to.equal('update');
+        expect(data[2].id).to.equal(1);
+        expect(data[2].data.suggestion.words[0].string).to.equal('test');
+        expect(data[2].data.completion[0].string).to.equal('bbb');
+
+        expect(data[3].event).to.equal('delete');
+        expect(data[3].id).to.equal(1);
+
+        expect(data[4].event).to.equal('update');
+        expect(data[4].id).to.equal(0);
+        expect(data[4].data.suggestion.words[0].string).to.equal('test');
+        expect(data[4].data.completion[0].string).to.equal('aaa');
+
+        done();
+      }
+
+      toStream(['test', 'tes'])
         .pipe(parser)
         .pipe(stateful)
         .pipe(ordered)

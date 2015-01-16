@@ -35,7 +35,7 @@
     "lacona": "^0.14.2",
     "lacona-addon-ordered": "^0.2.1",
     "lacona-addon-stateful": "^0.6.1",
-    "lacona-util-fulltext": "0.0.1",
+    "lacona-util-fulltext": "0.1.0",
     "lacona-util-jshint": "^0.2.0",
     "mocha": "^2.1.0"
   },
