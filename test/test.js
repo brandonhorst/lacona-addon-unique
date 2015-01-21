@@ -71,12 +71,12 @@ describe('lacona-addon-unique', function () {
       function callback(data) {
         expect(data).to.have.length(2);
         expect(data[0].event).to.equal('insert');
-        expect(data[0].data.suggestion.words[0].string).to.equal('test');
-        expect(data[0].data.completion[0].string).to.equal('aaa');
+        expect(fulltext.suggestion(data[0].data)).to.equal('test');
+        expect(fulltext.completion(data[0].data)).to.equal('aaa');
 
         expect(data[1].event).to.equal('update');
-        expect(data[1].data.suggestion.words[0].string).to.equal('test');
-        expect(data[1].data.completion[0].string).to.equal('aaa');
+        expect(fulltext.suggestion(data[1].data)).to.equal('test');
+        expect(fulltext.completion(data[1].data)).to.equal('aaa');
 
         done();
       }
@@ -95,13 +95,13 @@ describe('lacona-addon-unique', function () {
 
         expect(data[0].id).to.equal(0);
         expect(data[0].event).to.equal('insert');
-        expect(data[0].data.match[0].string).to.equal('test');
-        expect(data[0].data.suggestion.words[0].string).to.equal('bbb');
+        expect(fulltext.match(data[0].data)).to.equal('test');
+        expect(fulltext.suggestion(data[0].data)).to.equal('bbb');
 
         expect(data[1].event).to.equal('insert');
         expect(data[1].id).to.equal(0);
-        expect(data[1].data.suggestion.words[0].string).to.equal('test');
-        expect(data[1].data.completion[0].string).to.equal('aaa');
+        expect(fulltext.suggestion(data[1].data)).to.equal('test');
+        expect(fulltext.completion(data[1].data)).to.equal('aaa');
 
         expect(data[2].event).to.equal('delete');
         expect(data[2].id).to.equal(1);
@@ -123,23 +123,23 @@ describe('lacona-addon-unique', function () {
 
         expect(data[0].id).to.equal(0);
         expect(data[0].event).to.equal('insert');
-        expect(data[0].data.suggestion.words[0].string).to.equal('test');
-        expect(data[0].data.completion[0].string).to.equal('aaa');
+        expect(fulltext.suggestion(data[0].data)).to.equal('test');
+        expect(fulltext.completion(data[0].data)).to.equal('aaa');
 
         expect(data[1].event).to.equal('update');
         expect(data[1].id).to.equal(0);
-        expect(data[1].data.match[0].string).to.equal('test');
-        expect(data[1].data.suggestion.words[0].string).to.equal('aaa');
+        expect(fulltext.match(data[1].data)).to.equal('test');
+        expect(fulltext.suggestion(data[1].data)).to.equal('aaa');
 
         expect(data[2].event).to.equal('insert');
         expect(data[2].id).to.equal(1);
-        expect(data[2].data.suggestion.words[0].string).to.equal('test');
-        expect(data[2].data.completion[0].string).to.equal('bbb');
+        expect(fulltext.suggestion(data[2].data)).to.equal('test');
+        expect(fulltext.completion(data[2].data)).to.equal('bbb');
 
         expect(data[3].event).to.equal('update');
         expect(data[3].id).to.equal(1);
-        expect(data[3].data.match[0].string).to.equal('test');
-        expect(data[3].data.suggestion.words[0].string).to.equal('bbb');
+        expect(fulltext.match(data[3].data)).to.equal('test');
+        expect(fulltext.suggestion(data[3].data)).to.equal('bbb');
 
         done();
       }
@@ -158,18 +158,18 @@ describe('lacona-addon-unique', function () {
 
         expect(data[0].event).to.equal('insert');
         expect(data[0].id).to.equal(0);
-        expect(data[0].data.match[0].string).to.equal('test');
-        expect(data[0].data.suggestion.words[0].string).to.equal('aaa');
+        expect(fulltext.match(data[0].data)).to.equal('test');
+        expect(fulltext.suggestion(data[0].data)).to.equal('aaa');
 
         expect(data[1].event).to.equal('insert');
         expect(data[1].id).to.equal(1);
-        expect(data[1].data.match[0].string).to.equal('test');
-        expect(data[1].data.suggestion.words[0].string).to.equal('bbb');
+        expect(fulltext.match(data[1].data)).to.equal('test');
+        expect(fulltext.suggestion(data[1].data)).to.equal('bbb');
 
         expect(data[2].event).to.equal('update');
         expect(data[2].id).to.equal(1);
-        expect(data[2].data.match[0].string).to.equal('test');
-        expect(data[2].data.suggestion.words[0].string).to.equal('bbb');
+        expect(fulltext.match(data[2].data)).to.equal('test');
+        expect(fulltext.suggestion(data[2].data)).to.equal('bbb');
 
         expect(data[3].event).to.equal('delete');
         expect(data[3].id).to.equal(0);
@@ -191,13 +191,13 @@ describe('lacona-addon-unique', function () {
 
         expect(data[1].event).to.equal('update');
         expect(data[1].id).to.equal(0);
-        expect(data[1].data.match[0].string).to.equal('test');
-        expect(data[1].data.suggestion.words[0].string).to.equal('aaa');
+        expect(fulltext.match(data[1].data)).to.equal('test');
+        expect(fulltext.suggestion(data[1].data)).to.equal('aaa');
 
         expect(data[2].event).to.equal('insert');
         expect(data[2].id).to.equal(1);
-        expect(data[2].data.suggestion.words[0].string).to.equal('test');
-        expect(data[2].data.completion[0].string).to.equal('bbb');
+        expect(fulltext.suggestion(data[2].data)).to.equal('test');
+        expect(fulltext.completion(data[2].data)).to.equal('bbb');
 
         expect(data[3].event).to.equal('delete');
         expect(data[3].id).to.equal(1);
@@ -239,16 +239,16 @@ describe('lacona-addon-unique', function () {
 
         expect(data[0].event).to.equal('insert');
         expect(data[0].id).to.equal(0);
-        expect(data[0].data.suggestion.words[0].string).to.equal('test');
-        expect(data[0].data.completion[0].string).to.equal('bbb');
+        expect(fulltext.suggestion(data[0].data)).to.equal('test');
+        expect(fulltext.completion(data[0].data)).to.equal('bbb');
 
         expect(data[1].event).to.equal('delete');
         expect(data[1].id).to.equal(0);
 
         expect(data[2].event).to.equal('insert');
         expect(data[2].id).to.equal(0);
-        expect(data[2].data.suggestion.words[0].string).to.equal('test');
-        expect(data[2].data.completion[0].string).to.equal('aaa');
+        expect(fulltext.suggestion(data[2].data)).to.equal('test');
+        expect(fulltext.completion(data[2].data)).to.equal('aaa');
 
         done();
       }
@@ -267,8 +267,8 @@ describe('lacona-addon-unique', function () {
 
         expect(data[3].event).to.equal('insert');
         expect(data[3].id).to.equal(1);
-        expect(data[3].data.match[0].string).to.equal('test');
-        expect(data[3].data.suggestion.words[0].string).to.equal('bbb');
+        expect(fulltext.match(data[3].data)).to.equal('test');
+        expect(fulltext.suggestion(data[3].data)).to.equal('bbb');
 
         expect(data[4].event).to.equal('delete');
         expect(data[4].id).to.equal(0);
@@ -291,16 +291,16 @@ describe('lacona-addon-unique', function () {
 
         expect(data[2].event).to.equal('update');
         expect(data[2].id).to.equal(1);
-        expect(data[2].data.suggestion.words[0].string).to.equal('test');
-        expect(data[2].data.completion[0].string).to.equal('bbb');
+        expect(fulltext.suggestion(data[2].data)).to.equal('test');
+        expect(fulltext.completion(data[2].data)).to.equal('bbb');
 
         expect(data[3].event).to.equal('delete');
         expect(data[3].id).to.equal(1);
 
         expect(data[4].event).to.equal('update');
         expect(data[4].id).to.equal(0);
-        expect(data[4].data.suggestion.words[0].string).to.equal('test');
-        expect(data[4].data.completion[0].string).to.equal('aaa');
+        expect(fulltext.suggestion(data[4].data)).to.equal('test');
+        expect(fulltext.completion(data[4].data)).to.equal('aaa');
 
         done();
       }
