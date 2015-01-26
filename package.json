@@ -32,8 +32,8 @@
     "coveralls": "^2.11.2",
     "istanbul": "^0.3.5",
     "jshint": "^2.6.0",
-    "lacona": "^0.15.2",
-    "lacona-addon-ordered": "^0.4.0",
+    "lacona": "^0.16.1",
+    "lacona-addon-ordered": "^0.4.1",
     "lacona-addon-stateful": "^0.8.0",
     "lacona-util-fulltext": "0.2.0",
     "lacona-util-jshint": "^0.2.0",
@@ -41,6 +41,6 @@
   },
   "dependencies": {
     "inherits": "^2.0.1",
-    "lodash": "^2.4.1"
+    "lodash": "^3.0.0"
   }
 }
