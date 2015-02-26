@@ -1,7 +1,9 @@
 var chai = require('chai');
 var stream = require('stream');
+var es = require('event-stream');
 
 var lacona = require('lacona');
+var phrase = require('lacona-phrase');
 var Stateful = require('lacona-addon-stateful');
 var Ordered = require('lacona-addon-ordered');
 var fulltext = require('lacona-util-fulltext');
@@ -9,32 +11,6 @@ var fulltext = require('lacona-util-fulltext');
 var Unique = require('..');
 
 var expect = chai.expect;
-
-function toStream(strings) {
-  var newStream = new stream.Readable({objectMode: true});
-
-  strings.forEach(function (string) {
-    newStream.push(string);
-  });
-  newStream.push(null);
-
-  return newStream;
-}
-
-function toArray(done) {
-  var newStream = new stream.Writable({objectMode: true});
-  var list = [];
-  newStream.write = function(obj) {
-    list.push(obj);
-  };
-
-  newStream.end = function() {
-    done(list);
-  };
-
-  return newStream;
-}
-
 
 describe('lacona-addon-unique', function () {
   var parser, stateful, ordered, unique;
@@ -48,27 +24,26 @@ describe('lacona-addon-unique', function () {
   });
 
   describe('basic usage', function () {
-    var test;
+    var Test;
 
     beforeEach(function () {
-      test = lacona.createPhrase({
-        name: 'test/test',
+      Test = phrase.createPhrase({
         describe: function () {
-          return lacona.sequence({children: [
-            lacona.literal({text: 'test'}),
-            lacona.choice({children: [
-              lacona.literal({text: 'aaa'}),
-              lacona.literal({text: 'bbb'})
-            ]})
-          ]});
+          return phrase.sequence(null,
+            phrase.literal({text: 'test'}),
+            phrase.choice(null,
+              phrase.literal({text: 'aaa'}),
+              phrase.literal({text: 'bbb'})
+            )
+          );
         }
       });
 
-      parser.sentences = [test()];
+      parser.sentences = [phrase.createElement(Test)];
     });
 
     it('uniquifies updates within a single suggestion' , function (done) {
-      function callback(data) {
+      function callback(err, data) {
         expect(data).to.have.length(1);
 
         //insert t[est]aaa
@@ -79,16 +54,16 @@ describe('lacona-addon-unique', function () {
         done();
       }
 
-      toStream(['t'])
+      es.readArray(['t'])
         .pipe(parser)
         .pipe(stateful)
         .pipe(ordered)
         .pipe(unique)
-        .pipe(toArray(callback));
+        .pipe(es.writeArray(callback));
     });
 
     it('uniquifies updates within a single suggestion over time' , function (done) {
-      function callback(data) {
+      function callback(err, data) {
         expect(data).to.have.length(5);
 
         //insert: t[est]aaa
@@ -112,16 +87,16 @@ describe('lacona-addon-unique', function () {
         done();
       }
 
-      toStream(['t', 'te'])
+      es.readArray(['t', 'te'])
         .pipe(parser)
         .pipe(stateful)
         .pipe(ordered)
         .pipe(unique)
-        .pipe(toArray(callback));
+        .pipe(es.writeArray(callback));
     });
 
     it('uniquifies updates when changing the suggestion' , function (done) {
-      function callback(data) {
+      function callback(err, data) {
         expect(data).to.have.length(3);
 
         //insert testb[bb]
@@ -138,16 +113,16 @@ describe('lacona-addon-unique', function () {
         done();
       }
 
-      toStream(['testb', 'tes'])
+      es.readArray(['testb', 'tes'])
         .pipe(parser)
         .pipe(stateful)
         .pipe(ordered)
         .pipe(unique)
-        .pipe(toArray(callback));
+        .pipe(es.writeArray(callback));
     });
 
     it('removes uniqueness check when suggestion changes' , function (done) {
-      function callback(data) {
+      function callback(err, data) {
         expect(data).to.have.length(6);
 
         //insert tes[t]aaa
@@ -173,16 +148,16 @@ describe('lacona-addon-unique', function () {
         done();
       }
 
-      toStream(['tes','test'])
+      es.readArray(['tes','test'])
         .pipe(parser)
         .pipe(stateful)
         .pipe(ordered)
         .pipe(unique)
-        .pipe(toArray(callback));
+        .pipe(es.writeArray(callback));
     });
 
     it('handles delete switches appropriately' , function (done) {
-      function callback(data) {
+      function callback(err, data) {
         expect(data).to.have.length(5);
 
         //insert test[aaa]
@@ -206,16 +181,16 @@ describe('lacona-addon-unique', function () {
         done();
       }
 
-      toStream(['test','testb'])
+      es.readArray(['test','testb'])
         .pipe(parser)
         .pipe(stateful)
         .pipe(ordered)
         .pipe(unique)
-        .pipe(toArray(callback));
+        .pipe(es.writeArray(callback));
     });
 
     it('handles delete ignores appropriately' , function (done) {
-      function callback(data) {
+      function callback(err, data) {
         expect(data).to.have.length(5);
 
         //insert tes[t]aaa
@@ -238,36 +213,35 @@ describe('lacona-addon-unique', function () {
         done();
       }
 
-      toStream(['tes','testa'])
+      es.readArray(['tes','testa'])
         .pipe(parser)
         .pipe(stateful)
         .pipe(ordered)
         .pipe(unique)
-        .pipe(toArray(callback));
+        .pipe(es.writeArray(callback));
     });
   });
 
   describe('reverse order', function () {
-    var test;
+    var Test;
     beforeEach(function () {
-      test = lacona.createPhrase({
-        name: 'test/test',
+      Test = phrase.createPhrase({
         describe: function () {
-          return lacona.sequence({children: [
-            lacona.literal({text: 'test'}),
-            lacona.choice({children: [
-              lacona.literal({text: 'bbb'}),
-              lacona.literal({text: 'aaa'})
-            ]})
-          ]});
+          return phrase.sequence(null,
+            phrase.literal({text: 'test'}),
+            phrase.choice(null,
+              phrase.literal({text: 'bbb'}),
+              phrase.literal({text: 'aaa'})
+            )
+          );
         }
       });
 
-      parser.sentences = [test()];
+      parser.sentences = [phrase.createElement(Test)];
     });
 
     it('allows for inserts into an existing unique group', function (done) {
-      function callback(data) {
+      function callback(err, data) {
         expect(data).to.have.length(3);
 
         //insert t[est]bbb
@@ -282,16 +256,16 @@ describe('lacona-addon-unique', function () {
         done();
       }
 
-      toStream(['t'])
+      es.readArray(['t'])
         .pipe(parser)
         .pipe(stateful)
         .pipe(ordered)
         .pipe(unique)
-        .pipe(toArray(callback));
+        .pipe(es.writeArray(callback));
     });
 
     it('removes items from an existing unique group', function (done) {
-      function callback(data) {
+      function callback(err, data) {
         expect(data).to.have.length(5);
 
         //insert t[est]bbb
@@ -314,17 +288,17 @@ describe('lacona-addon-unique', function () {
         done();
       }
 
-      toStream(['t', 'testb'])
+      es.readArray(['t', 'testb'])
         .pipe(parser)
         .pipe(stateful)
         .pipe(ordered)
         .pipe(unique)
-        .pipe(toArray(callback));
+        .pipe(es.writeArray(callback));
 
     });
 
     it('removes items from an vanishing unique group', function (done) {
-      function callback(data) {
+      function callback(err, data) {
         expect(data).to.have.length(7);
 
         //insert test[bbb]
@@ -352,41 +326,40 @@ describe('lacona-addon-unique', function () {
         done();
       }
 
-      toStream(['test', 'tes'])
+      es.readArray(['test', 'tes'])
         .pipe(parser)
         .pipe(stateful)
         .pipe(ordered)
         .pipe(unique)
-        .pipe(toArray(callback));
+        .pipe(es.writeArray(callback));
 
     });
 
   });
 
   describe('group of 3', function () {
-    var test;
+    var Test;
 
     beforeEach(function () {
-      test = lacona.createPhrase({
-        name: 'test/test',
+      Test = phrase.createPhrase({
         describe: function () {
-          return lacona.sequence({children: [
-            lacona.literal({text: '1'}),
-            lacona.literal({text: '2'}),
-            lacona.choice({children: [
-              lacona.literal({text: 'ccc'}),
-              lacona.literal({text: 'aaa'}),
-              lacona.literal({text: 'bbb'})
-            ]})
-          ]});
+          return phrase.sequence(null,
+            phrase.literal({text: '1'}),
+            phrase.literal({text: '2'}),
+            phrase.choice(null,
+              phrase.literal({text: 'ccc'}),
+              phrase.literal({text: 'aaa'}),
+              phrase.literal({text: 'bbb'})
+            )
+          );
         }
       });
 
-      parser.sentences = [test()];
+      parser.sentences = [phrase.createElement(Test)];
     });
 
     it('handles updates into new sers properly', function (done) {
-      function callback(data) {
+      function callback(err, data) {
         expect(data).to.have.length(9);
 
         //insert [1]2ccc
@@ -421,17 +394,17 @@ describe('lacona-addon-unique', function () {
         done();
       }
 
-      toStream(['', '1'])
+      es.readArray(['', '1'])
         .pipe(parser)
         .pipe(stateful)
         .pipe(ordered)
         .pipe(unique)
-        .pipe(toArray(callback));
+        .pipe(es.writeArray(callback));
 
     });
 
     it('handles going back to old sers properly', function (done) {
-      function callback(data) {
+      function callback(err, data) {
         expect(data).to.have.length(9);
 
         //insert 1[2]ccc
@@ -466,17 +439,17 @@ describe('lacona-addon-unique', function () {
         done();
       }
 
-      toStream(['1', ''])
+      es.readArray(['1', ''])
         .pipe(parser)
         .pipe(stateful)
         .pipe(ordered)
         .pipe(unique)
-        .pipe(toArray(callback));
+        .pipe(es.writeArray(callback));
     });
 
 
     // it('handles toggling over old sers properly', function (done) {
-    //   function callback(data) {
+    //   function callback(err, data) {
     //     expect(data).to.have.length(15);
     //
     //     //insert ccc:0
@@ -524,12 +497,12 @@ describe('lacona-addon-unique', function () {
     //     done();
     //   }
     //
-    //   toStream(['', '1', ''])
+    //   es.readArray(['', '1', ''])
     //     .pipe(parser)
     //     .pipe(stateful)
     //     .pipe(ordered)
     //     .pipe(unique)
-    //     .pipe(toArray(callback));
+    //     .pipe(es.writeArray(callback));
     //
     // });
   });
